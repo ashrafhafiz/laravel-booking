@@ -27,10 +27,10 @@ class ScheduleFactory extends Factory
             'thursday_ends_at' => '17:00:00',
             'friday_starts_at' => '09:00:00',
             'friday_ends_at' => '17:00:00',
-            'saturday_starts_at' => '09:00:00',
-            'saturday_ends_at' => '17:00:00',
-            'sunday_starts_at' => '09:00:00',
-            'sunday_ends_at' => '17:00:00',
+            // 'saturday_starts_at' => '09:00:00',
+            // 'saturday_ends_at' => '17:00:00',
+            // 'sunday_starts_at' => '09:00:00',
+            // 'sunday_ends_at' => '17:00:00',
         ];
     }
 }
