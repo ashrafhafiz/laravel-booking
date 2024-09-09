@@ -31,11 +31,27 @@ class ScheduleAvailability
 
                     $this->subtractScheduleExclusion($exclusion);
                 });
+
+                $this->excludeTimePassedToday();
             });
 
-        foreach ($this->periods as $period) {
-            dump($period->asString());
-        };
+        // foreach ($this->periods as $period) {
+        //     dump($period->asString());
+        // };
+        return $this->periods;
+    }
+
+    protected function excludeTimePassedToday()
+    {
+        // Carbon::setTestNow(now()->setTimeFromTimeString('10:00'));
+        return $this->periods = $this->periods->subtract(
+            Period::make(
+                now()->startOfDay(),
+                now()->endOfHour(),
+                Precision::MINUTE(),
+                Boundaries::EXCLUDE_START(),
+            )
+        );
     }
 
     protected function addAvailabilityFromSchedule(Carbon $date)
