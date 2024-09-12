@@ -2,11 +2,13 @@
 
 namespace App\Bookings;
 
-use App\Models\Employee;
-use App\Models\Service;
 use Carbon\Carbon;
+use App\Models\Service;
+use App\Models\Employee;
 use Carbon\CarbonPeriod;
+use Spatie\Period\Period;
 use Illuminate\Support\Collection;
+use Spatie\Period\PeriodCollection;
 
 class ServiceSlotAvailability
 {
@@ -20,9 +22,19 @@ class ServiceSlotAvailability
 
         $this->employees->each(function (Employee $employee) use ($startsAt, $endsAt, &$range) {
 
-            $availability = (new ScheduleAvailability($employee, $this->service))
+            $periods = (new ScheduleAvailability($employee, $this->service))
                 ->forPeriod($startsAt, $endsAt);
-            dump($availability);
+
+            foreach ($periods as $period) {
+                $this->addAvailabileEmployeeForPeriod($range, $period, $employee);
+            }
         });
+
+        return $range;
+    }
+
+    public function addAvailabileEmployeeForPeriod(Collection $range, Period $period, Employee $employee)
+    {
+        dd($range);
     }
 }
