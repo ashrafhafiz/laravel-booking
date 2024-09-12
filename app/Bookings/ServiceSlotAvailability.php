@@ -7,6 +7,9 @@ use App\Models\Service;
 use App\Models\Employee;
 use Carbon\CarbonPeriod;
 use Spatie\Period\Period;
+use App\Models\Appointment;
+use Spatie\Period\Precision;
+use Spatie\Period\Boundaries;
 use Illuminate\Support\Collection;
 use Spatie\Period\PeriodCollection;
 
@@ -25,16 +28,54 @@ class ServiceSlotAvailability
             $periods = (new ScheduleAvailability($employee, $this->service))
                 ->forPeriod($startsAt, $endsAt);
 
+            $periods = $this->removeAppointments($periods, $employee);
+
             foreach ($periods as $period) {
-                $this->addAvailabileEmployeeForPeriod($range, $period, $employee);
+                $this->addAvailableEmployeeForPeriod($range, $period, $employee);
             }
         });
+
+        $range = $this->removeEmptySlots($range);
 
         return $range;
     }
 
-    public function addAvailabileEmployeeForPeriod(Collection $range, Period $period, Employee $employee)
+    public function removeAppointments(PeriodCollection $periods, Employee $employee)
     {
-        dd($range);
+        $employee->appointments()->whereNull('cancelled_at')->each(function (Appointment $appointment) use (&$periods) {
+            // dump($appointment);
+            $periods = $periods->subtract(
+                Period::make(
+                    $appointment->starts_at->copy()->subMinutes($this->service->durction),
+                    $appointment->ends_at,
+                    Precision::MINUTE(),
+                    // Boundaries::EXCLUDE_ALL(),
+                )
+            );
+        });
+        return $periods;
+    }
+
+    public function removeEmptySlots(Collection $range)
+    {
+        return $range->filter(function (Date $date) {
+            $date->slots = $date->slots->filter(function (Slot $slot) {
+                return $slot->hasEmployees();
+            });
+
+            return true;
+        });
+    }
+
+    public function addAvailableEmployeeForPeriod(Collection $range, Period $period, Employee $employee)
+    {
+        $range->each(function (Date $date) use ($period, $employee) {
+            $date->slots->each(function (Slot $slot) use ($period, $employee) {
+                if ($period->contains($slot->time)) {
+                    $slot->addEmployee($employee);
+                    // dump($period, $slot, $slot->time, 'Can work this period');
+                }
+            });
+        });
     }
 }
